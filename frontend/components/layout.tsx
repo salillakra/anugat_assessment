@@ -15,7 +15,6 @@ import {
   LogOut,
   Menu,
   X,
-  User as UserIcon,
 } from "lucide-react";
 import Image from "next/image";
 
@@ -120,7 +119,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       {mobileOpen && (
         <div className="relative z-50 md:hidden">
           <div className="fixed inset-0 bg-black/30 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
-          <nav className="fixed inset-y-0 left-0 flex w-64 flex-col bg-white dark:bg-[#1a1a1c] p-6 shadow-md rounded-r-[24px] animate-in slide-in-from-left duration-200">
+          <nav className="fixed inset-y-0 left-0 flex w-64 flex-col bg-white dark:bg-[#1a1a1c] p-6 shadow-md rounded-r-3xl animate-in slide-in-from-left duration-200">
             <div className="flex items-center justify-between mb-8">
               <div className="flex items-center gap-2.5">
                 <Image src="/anugat_logo.png" className="rounded-lg h-8 w-8" height={100} width={100} alt="Anugat Logo" />
@@ -178,9 +177,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       )}
 
       {/* Main Content Area */}
-      <div className="flex flex-1 flex-col overflow-hidden bg-white dark:bg-[#1a1a1c] rounded-[24px] shadow-sm border border-slate-100 dark:border-[#2a2a2c]">
+      <div className="flex flex-1 flex-col overflow-hidden bg-white dark:bg-[#1a1a1c] rounded-3xl shadow-sm border border-slate-100 dark:border-[#2a2a2c]">
         {/* Header */}
-        <header className="flex h-16 items-center justify-between border-b border-slate-100 dark:border-[#2a2a2c] px-6 md:px-8 bg-white dark:bg-[#1a1a1c] rounded-t-[24px] shrink-0">
+        <header className="flex h-16 items-center justify-between border-b border-slate-100 dark:border-[#2a2a2c] px-6 md:px-8 bg-white dark:bg-[#1a1a1c] rounded-t-3xl shrink-0">
           <div className="flex items-center gap-4">
             <button className="md:hidden p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800" onClick={() => setMobileOpen(true)}>
               <Menu className="h-6 w-6 text-slate-600 dark:text-slate-300" />
