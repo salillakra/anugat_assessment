@@ -198,6 +198,10 @@ h1, h2, h3, h4, h5, h6 {
   width: 100%;
 }
 
+.form-input.with-icon {
+  padding-left: 46px;
+}
+
 .form-input:focus {
   background-color: var(--surface);
   border-color: var(--brand-blue);

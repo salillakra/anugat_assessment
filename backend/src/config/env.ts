@@ -18,6 +18,7 @@ export const env = {
   DIRECT_URL: optionalEnv("DIRECT_URL"),
 
   REDIS_URL: optionalEnv("REDIS_URL", "redis://localhost:6379"),
+  AUTH_SECRET: requireEnv("AUTH_SECRET"),
 
   FRONTEND_URL: optionalEnv("FRONTEND_URL", "http://localhost:3000"),
 

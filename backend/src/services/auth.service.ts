@@ -49,7 +49,7 @@ const SESSION_TTL_SECONDS = 7 * 24 * 60 * 60;
 const SESSION_KEY_PREFIX = "session:";
 const SESSION_ISSUER = "samayak-api";
 const SESSION_AUDIENCE = "samayak-web";
-const SESSION_SECRET = new TextEncoder().encode(env.BETTER_AUTH_SECRET);
+const SESSION_SECRET = new TextEncoder().encode(env.AUTH_SECRET);
 
 export async function createSession(userId: string): Promise<string> {
   const token = await new SignJWT()

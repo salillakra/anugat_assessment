@@ -8,7 +8,7 @@ RUN apk add --no-cache tesseract-ocr tesseract-ocr-data-eng graphicsmagick ghost
 FROM base AS install
 RUN mkdir -p /temp/dev
 COPY package.json bun.lock /temp/dev/
-RUN cd /temp/dev && bun install --frozen-lockfile
+RUN cd /temp/dev && bun install 
 
 # Release stage
 FROM base AS release
