@@ -1,0 +1,11 @@
+.env
+.env/*
+.vscode
+.agents
+node_modules
+.next
+
+# prisma
+generated/
+
+

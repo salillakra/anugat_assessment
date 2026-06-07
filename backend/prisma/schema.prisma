@@ -1,0 +1,294 @@
+generator client {
+  provider = "prisma-client"
+  output   = "./generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// enums
+enum UserRole {
+  ADMIN
+  COORDINATOR
+  HOD
+  DEAN
+  FACULTY
+}
+
+enum RoomType {
+  CLASSROOM
+  LAB
+  SEMINAR
+  OTHER
+}
+
+enum CourseType {
+  THEORY
+  LAB
+  TUTORIAL
+}
+
+enum ImportStatus {
+  QUEUED
+  PARSING
+  OCR_PROCESSING
+  GEMINI_PARSING
+  INTEGRATING
+  COMPLETED
+  FAILED
+}
+
+enum ImportType {
+  PDF
+  CSV
+}
+
+enum DayOfWeek {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+}
+
+// models
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         UserRole
+  departmentId String?
+
+  department     Department?     @relation(fields: [departmentId], references: [id])
+  isDeleted      Boolean         @default(false)
+  courses        CourseFaculty[]
+  timetableSlots TimetableSlot[]
+  importJobs     ImportJob[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([email])
+  @@index([role])
+  @@index([departmentId])
+}
+
+model Department {
+  id        String  @id @default(cuid())
+  name      String
+  code      String  @unique
+  isDeleted Boolean @default(false)
+
+  branches Branch[]
+  rooms    Room[]
+  users    User[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([code])
+  @@index([isDeleted])
+}
+
+model Branch {
+  id   String @id @default(cuid())
+  name String
+  code String
+
+  departmentId String
+  department   Department @relation(fields: [departmentId], references: [id])
+
+  courses    Course[]
+  timetables Timetable[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([departmentId, code])
+  @@index([departmentId])
+}
+
+model Room {
+  id         String   @id @default(cuid())
+  roomNumber String
+  capacity   Int
+  type       RoomType
+  isDeleted  Boolean  @default(false)
+
+  departmentId String
+  department   Department @relation(fields: [departmentId], references: [id])
+
+  slots TimetableSlot[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([departmentId, roomNumber])
+  @@index([departmentId])
+  @@index([type])
+}
+
+model Course {
+  id        String     @id @default(cuid())
+  code      String
+  name      String
+  credits   Float
+  type      CourseType
+  semester  Int
+  isDeleted Boolean    @default(false)
+
+  branchId String
+  branch   Branch @relation(fields: [branchId], references: [id])
+
+  faculty CourseFaculty[]
+  slots   TimetableSlot[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([branchId, code])
+  @@index([branchId])
+  @@index([semester])
+  @@index([type])
+}
+
+model CourseFaculty {
+  id        String @id @default(cuid())
+  courseId  String
+  facultyId String
+
+  course  Course @relation(fields: [courseId], references: [id])
+  faculty User   @relation(fields: [facultyId], references: [id])
+
+  @@unique([courseId, facultyId])
+  @@index([courseId])
+  @@index([facultyId])
+}
+
+model Timetable {
+  id       String @id @default(cuid())
+  name     String
+  semester Int
+  section  String
+
+  branchId String
+  branch   Branch @relation(fields: [branchId], references: [id])
+
+  slots TimetableSlot[]
+
+  importJobId String?
+  importJob   ImportJob? @relation(fields: [importJobId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([branchId])
+  @@index([semester])
+}
+
+model TimetableSlot {
+  id          String    @id @default(cuid())
+  timetableId String
+  timetable   Timetable @relation(fields: [timetableId], references: [id])
+
+  courseId String?
+  course   Course? @relation(fields: [courseId], references: [id])
+
+  roomId String?
+  room   Room?   @relation(fields: [roomId], references: [id])
+
+  facultyId String?
+  faculty   User?   @relation(fields: [facultyId], references: [id])
+
+  dayOfWeek DayOfWeek
+  period    Int
+  startTime String
+  endTime   String
+
+  createdAt DateTime @default(now())
+
+  @@index([timetableId])
+  @@index([dayOfWeek, period])
+  @@index([roomId])
+  @@index([facultyId])
+  @@index([courseId])
+}
+
+model ImportJob {
+  id       String       @id @default(cuid())
+  type     ImportType
+  status   ImportStatus @default(QUEUED)
+  filename String
+  fileSize Int?
+
+  // summary stored as structured JSON after completion
+  summary Json?
+
+  // error message on failure
+  errorMsg String?
+
+  createdById String?
+  createdBy   User?   @relation(fields: [createdById], references: [id])
+
+  timetables        Timetable[]
+  scannedTimetables ScannedTimetable[]
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  completedAt DateTime?
+
+  @@index([status])
+  @@index([type])
+  @@index([createdById])
+}
+
+model ScannedTimetable {
+  id         String @id @default(cuid())
+  department String
+  program    String
+  branch     String
+  semester   String
+
+  courses   ScannedCourse[]
+  schedules ScannedScheduleEntry[]
+
+  importJobId String?
+  importJob   ImportJob? @relation(fields: [importJobId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([department])
+  @@index([importJobId])
+}
+
+model ScannedCourse {
+  id          String           @id @default(cuid())
+  timetableId String
+  timetable   ScannedTimetable @relation(fields: [timetableId], references: [id], onDelete: Cascade)
+
+  code    String
+  type    String
+  name    String
+  credits Float
+  teacher String
+
+  @@index([timetableId])
+}
+
+model ScannedScheduleEntry {
+  id          String           @id @default(cuid())
+  timetableId String
+  timetable   ScannedTimetable @relation(fields: [timetableId], references: [id], onDelete: Cascade)
+
+  day       String
+  startTime String
+  endTime   String
+  subject   String
+  room      String?
+
+  @@index([timetableId])
+  @@index([day])
+}

@@ -1,0 +1,110 @@
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: samayak-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: forge
+      POSTGRES_PASSWORD: forge
+      POSTGRES_DB: forge
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U forge"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: samayak-redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: samayak-backend
+    restart: always
+    environment:
+      DATABASE_URL: "postgresql://forge:forge@postgres:5432/forge"
+      REDIS_URL: "redis://redis:6379"
+      BETTER_AUTH_SECRET: "samayak-super-secret-change-in-production"
+      BETTER_AUTH_URL: "http://localhost:3001"
+      FRONTEND_URL: "http://localhost:3000"
+      UPLOAD_DIR: "/app/uploads"
+      RUN_WORKER_IN_PROCESS: "false"
+      GEMINI_API_KEY: "${GEMINI_API_KEY:-}"
+      PORT: 3001
+      NODE_ENV: production
+    ports:
+      - "3001:3001"
+    volumes:
+      - uploads:/app/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    # Run migrations and seed before starting backend server
+    command: >
+      sh -c "bunx prisma db push && bun run db:seed && bun run src/index.ts"
+
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: samayak-worker
+    restart: always
+    environment:
+      DATABASE_URL: "postgresql://forge:forge@postgres:5432/forge"
+      REDIS_URL: "redis://redis:6379"
+      BETTER_AUTH_SECRET: "samayak-super-secret-change-in-production"
+      BETTER_AUTH_URL: "http://localhost:3001"
+      FRONTEND_URL: "http://localhost:3000"
+      UPLOAD_DIR: "/app/uploads"
+      GEMINI_API_KEY: "${GEMINI_API_KEY:-}"
+      NODE_ENV: production
+    volumes:
+      - uploads:/app/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: ["bun", "run", "src/worker.ts"]
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: samayak-frontend
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      PORT: 3000
+      NODE_ENV: production
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:
+    driver: local
+  redisdata:
+    driver: local
+  uploads:
+    driver: local
