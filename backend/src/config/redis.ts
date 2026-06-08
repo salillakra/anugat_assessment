@@ -25,7 +25,7 @@ function parseRedisUrl(url: string) {
 async function enforceNoEviction(redis: Redis): Promise<void> {
   try {
     const policy = await redis.config("GET", "maxmemory-policy");
-    const current = (policy as string[])[1]; 
+    const current = (policy as string[])[1];
     if (current !== "noeviction") {
       await redis.config("SET", "maxmemory-policy", "noeviction");
       console.info(
@@ -33,6 +33,19 @@ async function enforceNoEviction(redis: Redis): Promise<void> {
       );
     }
   } catch (err: any) {
+    const isManagedRedis =
+      err?.message?.includes?.("Unknown option") ||
+      err?.message?.includes?.("CONFIG") ||
+      err?.message?.includes?.("arguments");
+
+    if (isManagedRedis) {
+      console.info(
+        `[Redis] Skipping maxmemory-policy enforcement (managed Redis detected). ` +
+          "If you experience eviction issues, please contact your Redis provider.",
+      );
+      return;
+    }
+
     console.warn(
       `[Redis] Could not enforce noeviction policy: ${err?.message ?? err}. ` +
         "Please set maxmemory-policy=noeviction in your Redis configuration.",
