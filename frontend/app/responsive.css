@@ -1,0 +1,170 @@
+/* Responsive Mobile Styles */
+
+/* Mobile optimizations */
+@media (max-width: 640px) {
+  .responsive-container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  
+  .responsive-text {
+    font-size: 0.875rem;
+  }
+  
+  .responsive-text-lg {
+    font-size: 1.125rem;
+  }
+  
+  .responsive-text-xl {
+    font-size: 1.5rem;
+  }
+  
+  .responsive-text-2xl {
+    font-size: 1.75rem;
+  }
+  
+  .responsive-padding {
+    padding: 1rem;
+  }
+  
+  .responsive-padding-lg {
+    padding: 1.5rem;
+  }
+  
+  .responsive-gap {
+    gap: 0.75rem;
+  }
+  
+  .responsive-gap-lg {
+    gap: 1rem;
+  }
+  
+  /* Touch-friendly buttons */
+  .touch-button {
+    min-height: 44px;
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+  }
+  
+  /* Hide non-essential content on mobile */
+  .hide-on-mobile {
+    display: none !important;
+  }
+  
+  /* Show mobile-specific content */
+  .show-on-mobile {
+    display: block !important;
+  }
+  
+  /* Responsive tables */
+  .responsive-table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Mobile-first charts */
+  .responsive-chart {
+    height: 250px !important;
+  }
+  
+  /* Card adjustments */
+  .responsive-card {
+    border-radius: 16px;
+    padding: 1rem;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 1024px) {
+  .responsive-container {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+  
+  .responsive-chart {
+    height: 300px !important;
+  }
+}
+
+/* Prevent zoom on iOS input focus */
+@media (max-width: 768px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
+
+/* Safe area support for modern mobile devices */
+@supports (padding: max(0px)) {
+  .safe-area-top {
+    padding-top: max(1rem, env(safe-area-inset-top));
+  }
+  
+  .safe-area-bottom {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+  
+  .safe-area-left {
+    padding-left: max(1rem, env(safe-area-inset-left));
+  }
+  
+  .safe-area-right {
+    padding-right: max(1rem, env(safe-area-inset-right));
+  }
+}
+
+/* Better mobile scrolling */
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Responsive form inputs */
+@media (max-width: 768px) {
+  .form-input {
+    font-size: 16px; /* Prevents iOS zoom */
+    height: 48px;
+  }
+}
+
+/* Responsive breakpoint utilities */
+@media (max-width: 640px) {
+  .mobile\:flex-col {
+    flex-direction: column;
+  }
+  
+  .mobile\:w-full {
+    width: 100%;
+  }
+  
+  .mobile\:text-center {
+    text-align: center;
+  }
+  
+  .mobile\:space-y-4 > * + * {
+    margin-top: 1rem;
+  }
+}
+
+/* Responsive spacing */
+@media (max-width: 768px) {
+  .mobile\:p-4 {
+    padding: 1rem;
+  }
+  
+  .mobile\:p-3 {
+    padding: 0.75rem;
+  }
+  
+  .mobile\:gap-2 {
+    gap: 0.5rem;
+  }
+  
+  .mobile\:gap-3 {
+    gap: 0.75rem;
+  }
+}

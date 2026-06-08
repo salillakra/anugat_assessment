@@ -18,7 +18,11 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+export default function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const { user, loading, logout } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
@@ -44,26 +48,63 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const isHodOrDean = role === "HOD" || role === "DEAN" || isAdmin;
 
   const navigation = [
-    { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard, show: isHodOrDean },
+    {
+      name: "Dashboard",
+      href: "/dashboard",
+      icon: LayoutDashboard,
+      show: isHodOrDean,
+    },
     { name: "Timetables", href: "/timetables", icon: Calendar, show: true },
-    { name: "Imports", href: "/imports", icon: UploadCloud, show: isCoordinator },
-    { name: "Departments", href: "/departments", icon: Building2, show: isAdmin },
-    { name: "Rooms", href: "/rooms", icon: DoorOpen, show: isAdmin || role === "COORDINATOR" },
-    { name: "Courses", href: "/courses", icon: BookOpen, show: isAdmin || role === "HOD" },
-    { name: "Faculty", href: "/faculty", icon: Users, show: isAdmin || role === "HOD" },
+    {
+      name: "Imports",
+      href: "/imports",
+      icon: UploadCloud,
+      show: isCoordinator,
+    },
+    {
+      name: "Departments",
+      href: "/departments",
+      icon: Building2,
+      show: isAdmin,
+    },
+    {
+      name: "Rooms",
+      href: "/rooms",
+      icon: DoorOpen,
+      show: isAdmin || role === "COORDINATOR",
+    },
+    {
+      name: "Courses",
+      href: "/courses",
+      icon: BookOpen,
+      show: isAdmin || role === "HOD",
+    },
+    {
+      name: "Faculty",
+      href: "/faculty",
+      icon: Users,
+      show: isAdmin || role === "HOD",
+    },
   ];
 
   return (
-    <div className="flex h-screen bg-[#CFE1F5] dark:bg-[#0b0b0d] p-4 gap-4 overflow-hidden">
+    <div className="flex h-screen bg-[#CFE1F5] dark:bg-[#0b0b0d] p-2 md:p-4 gap-2 md:gap-4 overflow-hidden safe-padding">
       {/* Desktop Sidebar */}
       <aside className="hidden w-64 bg-white dark:bg-[#1a1a1c] rounded-3xl shadow-sm border border-slate-100 dark:border-[#2a2a2c] flex-col md:flex">
         {/* Logo */}
         <div className="p-6">
-          <Link href="/dashboard" className="flex items-center gap-2.5 text-slate-900 dark:text-white">
-            <Image src="/anugat_logo.png" className="rounded-lg h-8 w-8" height={100} width={100} alt="Anugat Logo" />
-            <span className="text-2xl font-extrabold">
-              Anugat AI
-            </span>
+          <Link
+            href="/dashboard"
+            className="flex items-center gap-2.5 text-slate-900 dark:text-white"
+          >
+            <Image
+              src="/anugat_logo.png"
+              className="rounded-lg h-8 w-8"
+              height={100}
+              width={100}
+              alt="Anugat Logo"
+            />
+            <span className="text-2xl font-extrabold">Anugat AI</span>
           </Link>
         </div>
 
@@ -74,11 +115,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             const active = pathname === item.href;
 
             // Header/HOD/Admin partition line
-            const isElevatedStart = item.name === "Departments" || (item.name === "Rooms" && !navigation[idx - 1]?.show);
+            const isElevatedStart =
+              item.name === "Departments" ||
+              (item.name === "Rooms" && !navigation[idx - 1]?.show);
 
             return (
               <React.Fragment key={item.name}>
-                {isElevatedStart && <hr className="border-slate-100 dark:border-[#2a2a2c] my-3 mx-2" />}
+                {isElevatedStart && (
+                  <hr className="border-slate-100 dark:border-[#2a2a2c] my-3 mx-2" />
+                )}
                 <Link
                   href={item.href}
                   className={`flex items-center gap-3 px-4 py-3 rounded-full text-sm font-semibold transition-all ${
@@ -102,8 +147,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               {user.name.charAt(0).toUpperCase()}
             </div>
             <div className="flex-1 overflow-hidden">
-              <p className="truncate text-sm font-bold text-[#232635] dark:text-white">{user.name}</p>
-              <p className="truncate text-xs text-[#7C8294] font-medium">{role}</p>
+              <p className="truncate text-sm font-bold text-[#232635] dark:text-white">
+                {user.name}
+              </p>
+              <p className="truncate text-xs text-[#7C8294] font-medium">
+                {role}
+              </p>
             </div>
           </div>
           <button
@@ -118,12 +167,23 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       {mobileOpen && (
         <div className="relative z-50 md:hidden">
-          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
+          <div
+            className="fixed inset-0 bg-black/30 backdrop-blur-sm"
+            onClick={() => setMobileOpen(false)}
+          />
           <nav className="fixed inset-y-0 left-0 flex w-64 flex-col bg-white dark:bg-[#1a1a1c] p-6 shadow-md rounded-r-3xl animate-in slide-in-from-left duration-200">
             <div className="flex items-center justify-between mb-8">
               <div className="flex items-center gap-2.5">
-                <Image src="/anugat_logo.png" className="rounded-lg h-8 w-8" height={100} width={100} alt="Anugat Logo" />
-                <span className="text-xl font-extrabold text-slate-900 dark:text-white tracking-wider">ANUGAT AI</span>
+                <Image
+                  src="/anugat_logo.png"
+                  className="rounded-lg h-8 w-8"
+                  height={100}
+                  width={100}
+                  alt="Anugat Logo"
+                />
+                <span className="text-xl font-extrabold text-slate-900 dark:text-white tracking-wider">
+                  ANUGAT AI
+                </span>
               </div>
               <button onClick={() => setMobileOpen(false)}>
                 <X className="h-6 w-6 text-slate-500" />
@@ -133,11 +193,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               {navigation.map((item, idx) => {
                 if (!item.show) return null;
                 const active = pathname === item.href;
-                const isElevatedStart = item.name === "Departments" || (item.name === "Rooms" && !navigation[idx - 1]?.show);
+                const isElevatedStart =
+                  item.name === "Departments" ||
+                  (item.name === "Rooms" && !navigation[idx - 1]?.show);
 
                 return (
                   <React.Fragment key={item.name}>
-                    {isElevatedStart && <hr className="border-slate-100 dark:border-[#2a2a2c] my-3" />}
+                    {isElevatedStart && (
+                      <hr className="border-slate-100 dark:border-[#2a2a2c] my-3" />
+                    )}
                     <Link
                       href={item.href}
                       onClick={() => setMobileOpen(false)}
@@ -177,24 +241,27 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       )}
 
       {/* Main Content Area */}
-      <div className="flex flex-1 flex-col overflow-hidden bg-white dark:bg-[#1a1a1c] rounded-3xl shadow-sm border border-slate-100 dark:border-[#2a2a2c]">
+      <div className="flex flex-1 flex-col overflow-hidden bg-white dark:bg-[#1a1a1c] rounded-2xl md:rounded-3xl shadow-sm border border-slate-100 dark:border-[#2a2a2c]">
         {/* Header */}
-        <header className="flex h-16 items-center justify-between border-b border-slate-100 dark:border-[#2a2a2c] px-6 md:px-8 bg-white dark:bg-[#1a1a1c] rounded-t-3xl shrink-0">
-          <div className="flex items-center gap-4">
-            <button className="md:hidden p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800" onClick={() => setMobileOpen(true)}>
-              <Menu className="h-6 w-6 text-slate-600 dark:text-slate-300" />
+        <header className="flex h-14 md:h-16 items-center justify-between border-b border-slate-100 dark:border-[#2a2a2c] px-4 md:px-6 lg:px-8 bg-white dark:bg-[#1a1a1c] rounded-t-2xl md:rounded-t-3xl shrink-0">
+          <div className="flex items-center gap-2 md:gap-4">
+            <button
+              className="md:hidden p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800"
+              onClick={() => setMobileOpen(true)}
+            >
+              <Menu className="h-5 w-5 md:h-6 md:w-6 text-slate-600 dark:text-slate-300" />
             </button>
-            <div className="text-sm font-bold text-[#256199] bg-[#E6F0FA] px-4 py-1.5 rounded-full">
+            <div className="text-xs md:text-sm font-bold text-[#256199] bg-[#E6F0FA] px-3 py-1 md:px-4 md:py-1.5 rounded-full whitespace-nowrap">
               Spring 2026 Session
             </div>
           </div>
-          <div className="text-xs font-bold bg-[#0B0B0D] text-white px-4 py-2 rounded-full tracking-wider uppercase">
+          <div className="text-xs font-bold bg-[#0B0B0D] text-white px-3 py-1.5 md:px-4 md:py-2 rounded-full tracking-wider uppercase whitespace-nowrap">
             {role} Portal
           </div>
         </header>
 
         {/* Page body */}
-        <main className="flex-1 overflow-y-auto p-6 md:p-8 bg-slate-50/50 dark:bg-[#121214]">
+        <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 bg-slate-50/50 dark:bg-[#121214]">
           {children}
         </main>
       </div>
