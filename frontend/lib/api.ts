@@ -1,4 +1,5 @@
-const API_BASE_URL = "http://localhost:3001/api";
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
 
 export interface ApiResponse<T> {
   success: boolean;
@@ -21,10 +22,10 @@ class ApiClient {
 
   async request<T>(
     endpoint: string,
-    options: RequestInit = {}
+    options: RequestInit = {},
   ): Promise<ApiResponse<T>> {
     const url = `${API_BASE_URL}${endpoint}`;
-    
+
     // Determine headers
     const headers = this.getHeaders();
     if (options.body instanceof FormData) {
@@ -43,7 +44,7 @@ class ApiClient {
 
     try {
       const response = await fetch(url, config);
-      
+
       if (response.status === 204) {
         return { success: true };
       }
@@ -59,7 +60,8 @@ class ApiClient {
         }
         return {
           success: false,
-          error: result?.error ?? `Request failed with status ${response.status}`,
+          error:
+            result?.error ?? `Request failed with status ${response.status}`,
         };
       }
 
@@ -72,14 +74,17 @@ class ApiClient {
     }
   }
 
-  async get<T>(endpoint: string, options?: RequestInit): Promise<ApiResponse<T>> {
+  async get<T>(
+    endpoint: string,
+    options?: RequestInit,
+  ): Promise<ApiResponse<T>> {
     return this.request<T>(endpoint, { ...options, method: "GET" });
   }
 
   async post<T>(
     endpoint: string,
     body: unknown,
-    options?: RequestInit
+    options?: RequestInit,
   ): Promise<ApiResponse<T>> {
     const isFormData = body instanceof FormData;
     return this.request<T>(endpoint, {
@@ -92,7 +97,7 @@ class ApiClient {
   async put<T>(
     endpoint: string,
     body: unknown,
-    options?: RequestInit
+    options?: RequestInit,
   ): Promise<ApiResponse<T>> {
     const isFormData = body instanceof FormData;
     return this.request<T>(endpoint, {
@@ -102,7 +107,10 @@ class ApiClient {
     });
   }
 
-  async delete<T>(endpoint: string, options?: RequestInit): Promise<ApiResponse<T>> {
+  async delete<T>(
+    endpoint: string,
+    options?: RequestInit,
+  ): Promise<ApiResponse<T>> {
     return this.request<T>(endpoint, { ...options, method: "DELETE" });
   }
 }

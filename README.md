@@ -18,28 +18,28 @@ anugat_assessment/
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│                      Browser Client                      │
-│  Next.js 16 · React 19 · Tailwind CSS v4 · Socket.IO   │
+│                      Browser Client                     │
+│  Next.js 16 · React 19 · Tailwind CSS v4 · Socket.IO    │
 └──────────────────────────┬──────────────────────────────┘
                            │  HTTP REST + WebSocket
 ┌──────────────────────────▼──────────────────────────────┐
-│                    Hono API Server (Bun)                  │
-│  Routes → Controllers → Services → Prisma ORM            │
-│  Auth (JWT cookie) · CORS · Correlation IDs              │
+│                    Hono API Server (Bun)                │
+│  Routes → Controllers → Services → Prisma ORM           │
+│  Auth (JWT cookie) · CORS · Correlation IDs             │
 └───────┬──────────────────────────────────┬──────────────┘
         │  BullMQ job queues               │  Prisma Accelerate
 ┌───────▼───────────┐          ┌───────────▼──────────────┐
-│   Redis (BullMQ)  │          │   PostgreSQL (PG)    │
-│  noeviction policy│          │  via Prisma Accelerate    │
+│   Redis (BullMQ)  │          │   PostgreSQL (PG)        │
+│  noeviction policy│          │  via Prisma Accelerate   │
 └───────┬───────────┘          └──────────────────────────┘
         │
 ┌───────▼────────────────────────────────────────────────┐
-│              PDF Import Pipeline (BullMQ Workers)        │
-│                                                          │
-│  PDF Upload → pdf2pic → Tesseract OCR (per page)        │
-│            → OCR Aggregation → Gemini AI Parsing         │
-│            → Zod Validation → ScannedTimetable (DB)      │
-│            → [Integrate] → Timetable + TimetableSlot     │
+│              PDF Import Pipeline (BullMQ Workers)      │
+│                                                        │
+│  PDF Upload → pdf2pic → Tesseract OCR (per page)       │
+│            → OCR Aggregation → Gemini AI Parsing       │
+│            → Zod Validation → ScannedTimetable (DB)    │
+│            → [Integrate] → Timetable + TimetableSlot   │
 └────────────────────────────────────────────────────────┘
 ```
 
