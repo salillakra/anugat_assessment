@@ -1,5 +1,5 @@
-import { Worker, type Job } from "bullmq";
-import { redisConnection } from "../../config/redis";
+import { type Job } from "bullmq";
+import { preprocessForOcr } from "../../utils/image-processing";
 import { logger } from "../../utils/logger";
 import { prisma } from "../../config/db";
 import { SocketManager } from "../../socket/socket";
@@ -14,8 +14,6 @@ import { fromPath } from "pdf2pic";
 import { mkdirSync, existsSync } from "fs";
 import { join } from "path";
 import { env } from "../../config/env";
-
-// Converting PDF pages into PNG images and creates child OCR jobs for each page.
 
 export async function handlePdfConversion(
   job: Job<PdfConversionJobData>,
@@ -59,8 +57,41 @@ export async function handlePdfConversion(
   emitProgress(
     importJobId,
     "PDF_CONVERSION",
+    10,
+    `Converted ${totalPages} pages. Enhancing images for OCR...`,
+  );
+
+  logger.info(
+    `[PdfConversion] Starting image preprocessing for ${totalPages} pages...`,
+  );
+
+  const preprocessedResults = await Promise.all(
+    results.map(async (result, index) => {
+      if (!result.path)
+        throw new Error(`Missing image path for page ${index + 1}`);
+
+      try {
+        const processedPath = await preprocessForOcr(result.path);
+        return {
+          originalPath: result.path,
+          processedPath: processedPath,
+          pageNumber: index + 1,
+        };
+      } catch (error) {
+        logger.error(
+          `[PdfConversion] Failed to preprocess page ${index + 1}`,
+          error,
+        );
+        throw error; // the BullMQ job fails and retries
+      }
+    }),
+  );
+
+  emitProgress(
+    importJobId,
+    "PDF_CONVERSION",
     15,
-    `Converted ${totalPages} pages`,
+    `Preprocessed ${totalPages} pages`,
   );
 
   await prisma.importJob.update({
@@ -68,13 +99,13 @@ export async function handlePdfConversion(
     data: { status: "OCR_PROCESSING" },
   });
 
-  const ocrChildren = results.map((result, index) => ({
-    name: `${JOB_NAMES.OCR_PAGE}-${index + 1}`,
+  const ocrChildren = preprocessedResults.map((result) => ({
+    name: `${JOB_NAMES.OCR_PAGE}-${result.pageNumber}`,
     queueName: QUEUE_NAMES.TIMETABLE_OCR,
     data: {
       importJobId,
-      imagePath: result.path!,
-      pageNumber: index + 1,
+      imagePath: result.processedPath, // Pass the enhanced image to the OCR worker
+      pageNumber: result.pageNumber,
       totalPages,
     } satisfies OcrPageJobData,
     opts: {
@@ -90,6 +121,7 @@ export async function handlePdfConversion(
       importJobId,
       totalPages,
       tempDir,
+      pdfPath: filePath, // passed through so Gemini can use the original PDF
     } satisfies OcrAggregatorJobData,
     opts: {
       attempts: 1,
@@ -103,8 +135,6 @@ export async function handlePdfConversion(
 
   return { totalPages, tempDir };
 }
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function emitProgress(
   importJobId: string,

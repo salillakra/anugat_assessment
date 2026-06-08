@@ -15,18 +15,28 @@ import type {
 } from "../../types/timetable-processing.types";
 import { JOB_NAMES } from "../../types/timetable-processing.types";
 
-
 const MAX_GEMINI_RETRIES = 1;
 
 export async function handleValidation(
   job: Job<ValidationJobData>,
 ): Promise<{ valid: boolean; retrying?: boolean; errors?: string[] }> {
-  const { importJobId, geminiOutput, ocrResults, retryCount = 0 } = job.data;
+  const {
+    importJobId,
+    geminiOutput,
+    ocrResults,
+    pdfPath,
+    retryCount = 0,
+  } = job.data;
   logger.info(
     `[Validation] Validating Gemini output (job: ${job.id}, retry: ${retryCount})`,
   );
 
-  emitProgress(importJobId, "VALIDATION", 80, "Validating timetable structure...");
+  emitProgress(
+    importJobId,
+    "VALIDATION",
+    80,
+    "Validating timetable structure...",
+  );
 
   // Run Zod validation
   const result = validateGeminiOutput(geminiOutput);
@@ -88,6 +98,7 @@ export async function handleValidation(
       {
         importJobId,
         ocrResults,
+        pdfPath,
         retryCount: retryCount + 1,
         previousErrors: errors,
       } satisfies GeminiParsingJobData,
@@ -130,7 +141,6 @@ export async function handleValidation(
 
   return { valid: false, retrying: false, errors };
 }
-
 
 function emitProgress(
   importJobId: string,

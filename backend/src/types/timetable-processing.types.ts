@@ -43,11 +43,13 @@ export interface OcrAggregatorJobData {
   importJobId: string;
   totalPages: number;
   tempDir: string;
+  pdfPath: string;
 }
 
 export interface GeminiParsingJobData {
   importJobId: string;
   ocrResults: OcrPageResult[];
+  pdfPath: string; // original PDF file path — sent to Gemini as inline image
   retryCount?: number;
   previousErrors?: string[];
 }
@@ -56,6 +58,7 @@ export interface ValidationJobData {
   importJobId: string;
   geminiOutput: unknown;
   ocrResults: OcrPageResult[];
+  pdfPath: string;
   retryCount?: number;
 }
 

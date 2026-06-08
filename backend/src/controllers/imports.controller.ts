@@ -5,6 +5,7 @@ import {
   timetableFlowProducer,
 } from "../queues/timetable-processing.queue";
 import { CsvImportService } from "../services/csv-import.service";
+import { TimetableIntegrationService } from "../services/timetable-integration.service";
 import {
   ok,
   created,
@@ -16,10 +17,7 @@ import { writeFileSync, mkdirSync, existsSync } from "fs";
 import { join } from "path";
 import { env } from "../config/env";
 import { randomBytes } from "crypto";
-import {
-  QUEUE_NAMES,
-  JOB_NAMES,
-} from "../types/timetable-processing.types";
+import { QUEUE_NAMES, JOB_NAMES } from "../types/timetable-processing.types";
 import type { PdfConversionJobData } from "../types/timetable-processing.types";
 
 export const ImportsController = {
@@ -214,6 +212,33 @@ export const ImportsController = {
     return ok(c, { success: true });
   },
 
+  async integrateJob(c: Context) {
+    const id = c.req.param("id");
+    if (!id) return notFound(c);
+    const job = await prisma.importJob.findUnique({
+      where: { id },
+      include: { scannedTimetables: { select: { id: true } } },
+    });
+    if (!job) return notFound(c);
+
+    if (job.scannedTimetables.length === 0) {
+      return badRequest(
+        c,
+        "No scanned timetables found for this import job. The PDF may still be processing.",
+      );
+    }
+
+    try {
+      const results = await TimetableIntegrationService.integrateImportJob(id);
+      return ok(c, {
+        integratedCount: results.length,
+        results,
+      });
+    } catch (err: any) {
+      return badRequest(c, err?.message ?? "Integration failed");
+    }
+  },
+
   async retryJob(c: Context) {
     const { id } = c.req.param();
     const job = await prisma.importJob.findUnique({
@@ -229,11 +254,14 @@ export const ImportsController = {
     if (!existsSync(filePath)) {
       await prisma.importJob.update({
         where: { id },
-        data: { status: "FAILED", errorMsg: "Source PDF file was deleted from disk" },
+        data: {
+          status: "FAILED",
+          errorMsg: "Source PDF file was deleted from disk",
+        },
       });
       return badRequest(
         c,
-        "Source PDF file was deleted from disk and cannot be retried"
+        "Source PDF file was deleted from disk and cannot be retried",
       );
     }
 
@@ -254,7 +282,7 @@ export const ImportsController = {
       {
         attempts: 3,
         backoff: { type: "exponential", delay: 5000 },
-      }
+      },
     );
 
     return ok(c, { importJobId: job.id, status: "QUEUED" });

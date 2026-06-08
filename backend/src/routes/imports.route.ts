@@ -29,7 +29,20 @@ router.post(
 // Job status
 router.get("/jobs", ImportsController.listJobs);
 router.get("/jobs/:id", ImportsController.getJob);
-router.delete("/jobs/:id", requireRole(UserRole.ADMIN, UserRole.COORDINATOR), ImportsController.deleteJob);
-router.post("/jobs/:id/retry", requireRole(UserRole.ADMIN, UserRole.COORDINATOR), ImportsController.retryJob);
+router.delete(
+  "/jobs/:id",
+  requireRole(UserRole.ADMIN, UserRole.COORDINATOR),
+  ImportsController.deleteJob,
+);
+router.post(
+  "/jobs/:id/retry",
+  requireRole(UserRole.ADMIN, UserRole.COORDINATOR),
+  ImportsController.retryJob,
+);
+router.post(
+  "/jobs/:id/integrate",
+  requireRole(UserRole.ADMIN, UserRole.COORDINATOR),
+  ImportsController.integrateJob,
+);
 
 export { router as importsRouter };

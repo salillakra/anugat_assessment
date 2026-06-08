@@ -19,6 +19,7 @@ import {
   BookOpen,
   DoorOpen,
   Calendar,
+  GitMerge,
 } from "lucide-react";
 
 export default function ImportsPage() {
@@ -39,6 +40,13 @@ export default function ImportsPage() {
   // Job queue & history states
   const [jobs, setJobs] = useState<any[]>([]);
   const [loadingJobs, setLoadingJobs] = useState(false);
+  const [integratingJobId, setIntegratingJobId] = useState<string | null>(null);
+  const [integrateResult, setIntegrateResult] = useState<Record<string, any>>(
+    {},
+  );
+  const [integrateError, setIntegrateError] = useState<Record<string, string>>(
+    {},
+  );
 
   // Listen to realtime Socket.IO updates
   const progressData = useImportProgress(activeJobId);
@@ -179,6 +187,21 @@ export default function ImportsPage() {
     }
   };
 
+  const handleIntegrateJob = async (id: string) => {
+    setIntegratingJobId(id);
+    setIntegrateError((prev) => ({ ...prev, [id]: "" }));
+    const res = await api.post<any>(`/imports/jobs/${id}/integrate`, {});
+    if (res.success && res.data) {
+      setIntegrateResult((prev) => ({ ...prev, [id]: res.data }));
+    } else {
+      setIntegrateError((prev) => ({
+        ...prev,
+        [id]: res.error || "Integration failed",
+      }));
+    }
+    setIntegratingJobId(null);
+  };
+
   const handleDismissActiveTracker = () => {
     setActiveJobId(null);
     setActiveJob(null);
@@ -280,43 +303,76 @@ export default function ImportsPage() {
           "GEMINI_PARSING",
           "INTEGRATING",
         ].includes(job.status);
+        const isIntegrating = integratingJobId === job.id;
+        const integrated = integrateResult[job.id];
+        const intError = integrateError[job.id];
         return (
-          <div className="flex justify-end items-center gap-2">
-            {isRunning ? (
+          <div className="flex flex-col gap-1.5 items-end">
+            <div className="flex justify-end items-center gap-2">
+              {isRunning ? (
+                <button
+                  onClick={() => {
+                    setActiveJobId(job.id);
+                    setActiveJob(job);
+                  }}
+                  className="px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 dark:bg-blue-950/30 dark:text-blue-400 rounded-md text-xs font-semibold transition-colors"
+                >
+                  Track
+                </button>
+              ) : (
+                <button
+                  onClick={() => {
+                    setActiveJobId(job.id);
+                    setActiveJob(job);
+                  }}
+                  className="px-2.5 py-1 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-md text-xs font-semibold transition-colors"
+                >
+                  View Summary
+                </button>
+              )}
+              {job.status === "FAILED" && (
+                <button
+                  onClick={() => handleRetryJob(job.id)}
+                  className="px-2.5 py-1 bg-amber-50 hover:bg-amber-100 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400 rounded-md text-xs font-semibold transition-colors"
+                >
+                  Retry
+                </button>
+              )}
+              {job.status === "COMPLETED" && !integrated && (
+                <button
+                  onClick={() => handleIntegrateJob(job.id)}
+                  disabled={isIntegrating}
+                  className="px-2.5 py-1 bg-violet-50 hover:bg-violet-100 text-violet-700 dark:bg-violet-950/30 dark:text-violet-400 rounded-md text-xs font-semibold transition-colors disabled:opacity-60 flex items-center gap-1"
+                  title="Convert scanned data into real Timetable records"
+                >
+                  {isIntegrating ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  ) : (
+                    <GitMerge className="h-3 w-3" />
+                  )}
+                  Integrate
+                </button>
+              )}
               <button
-                onClick={() => {
-                  setActiveJobId(job.id);
-                  setActiveJob(job);
-                }}
-                className="px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 dark:bg-blue-950/30 dark:text-blue-400 rounded-md text-xs font-semibold transition-colors"
+                onClick={() => handleDeleteJob(job.id)}
+                className="px-2.5 py-1 bg-slate-50 hover:bg-rose-50 hover:text-rose-600 dark:bg-slate-800 dark:hover:bg-rose-950/20 dark:hover:text-red-400 text-slate-500 dark:text-slate-400 rounded-md text-xs font-semibold transition-colors"
               >
-                Track
+                Delete
               </button>
-            ) : (
-              <button
-                onClick={() => {
-                  setActiveJobId(job.id);
-                  setActiveJob(job);
-                }}
-                className="px-2.5 py-1 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-md text-xs font-semibold transition-colors"
-              >
-                View Summary
-              </button>
+            </div>
+            {integrated && (
+              <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold text-right">
+                ✓ {integrated.integratedCount ?? 1} timetable(s) integrated
+              </p>
             )}
-            {job.status === "FAILED" && (
-              <button
-                onClick={() => handleRetryJob(job.id)}
-                className="px-2.5 py-1 bg-amber-50 hover:bg-amber-100 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400 rounded-md text-xs font-semibold transition-colors"
+            {intError && (
+              <p
+                className="text-[10px] text-rose-500 font-semibold text-right max-w-[200px] truncate"
+                title={intError}
               >
-                Retry
-              </button>
+                ✗ {intError}
+              </p>
             )}
-            <button
-              onClick={() => handleDeleteJob(job.id)}
-              className="px-2.5 py-1 bg-slate-50 hover:bg-rose-50 hover:text-rose-600 dark:bg-slate-800 dark:hover:bg-rose-950/20 dark:hover:text-red-400 text-slate-500 dark:text-slate-400 rounded-md text-xs font-semibold transition-colors"
-            >
-              Delete
-            </button>
           </div>
         );
       },

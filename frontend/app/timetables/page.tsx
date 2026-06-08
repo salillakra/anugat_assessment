@@ -13,18 +13,21 @@ export default function TimetablesPage() {
   const [loadingData, setLoadingData] = useState(false);
 
   const fetchList = async () => {
+    setLoadingList(true);
+    // paginatedOk returns { success, data: Timetable[], pagination }
     const res = await api.get<any[]>("/timetables?limit=100");
-    if (res.success && res.data) {
+    if (res.success && Array.isArray(res.data) && res.data.length > 0) {
       setTimetables(res.data);
-      if (res.data.length > 0) {
-        setSelectedTimetableId(res.data[0].id);
-      }
+      setSelectedTimetableId(res.data[0].id);
+    } else {
+      setTimetables([]);
     }
     setLoadingList(false);
   };
 
   const fetchTimetable = async (id: string) => {
     setLoadingData(true);
+    setTimetableData(null);
     const res = await api.get<any>(`/timetables/${id}`);
     if (res.success && res.data) {
       setTimetableData(res.data);
@@ -46,55 +49,66 @@ export default function TimetablesPage() {
   const periods = [1, 2, 3, 4, 5, 6, 7, 8, 9];
 
   const PERIOD_HEADERS = [
-    { id: 1, name: "I", time: "08:00 - 08:50" },
-    { id: 2, name: "II", time: "09:00 - 09:50" },
-    { id: 3, name: "III", time: "10:00 - 10:50" },
-    { id: 4, name: "IV", time: "11:00 - 11:50" },
-    { id: 5, name: "V", time: "12:00 - 12:50" },
-    { id: 6, name: "VI", time: "13:30 - 14:20" },
-    { id: 7, name: "VII", time: "14:30 - 15:20" },
-    { id: 8, name: "VIII", time: "15:30 - 16:20" },
-    { id: 9, name: "IX", time: "16:30 - 17:20" },
+    { id: 1, name: "I", time: "08:00–08:50" },
+    { id: 2, name: "II", time: "09:00–09:50" },
+    { id: 3, name: "III", time: "10:00–10:50" },
+    { id: 4, name: "IV", time: "11:00–11:50" },
+    { id: 5, name: "V", time: "12:00–12:50" },
+    { id: 6, name: "VI", time: "13:30–14:20" },
+    { id: 7, name: "VII", time: "14:30–15:20" },
+    { id: 8, name: "VIII", time: "15:30–16:20" },
+    { id: 9, name: "IX", time: "16:30–17:20" },
   ];
 
-  // Group slots by dayOfWeek and period
+  // Build grid: { [DAY]: { [period]: slot[] } }
   const grid: Record<string, Record<number, any[]>> = {};
-  days.forEach((d) => {
+  for (const d of days) {
     grid[d] = {};
-    periods.forEach((p) => {
-      grid[d][p] = [];
-    });
-  });
-
-  if (timetableData?.slots) {
-    timetableData.slots.forEach((slot: never) => {
-      if (grid[slot.dayOfWeek] && grid[slot.dayOfWeek][slot.period]) {
-        grid[slot.dayOfWeek][slot.period].push(slot);
-      }
-    });
+    for (const p of periods) grid[d][p] = [];
   }
 
-  // Generate color palette based on course code
+  if (Array.isArray(timetableData?.slots)) {
+    for (const slot of timetableData.slots) {
+      // Normalise day to uppercase in case the DB returns lowercase
+      const day: string = (slot.dayOfWeek as string)?.toUpperCase();
+      // Period can come back as string from JSON
+      const period: number = Number(slot.period);
+      if (grid[day] && grid[day][period] !== undefined) {
+        grid[day][period].push(slot);
+      }
+    }
+  }
+
+  // Deterministic colour palette keyed on course code
   const getCourseBg = (code: string) => {
     if (!code)
       return "bg-slate-50 border-slate-200 dark:bg-slate-800/20 dark:border-slate-800";
-    const h = code.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    const h = [...code].reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
     const colors = [
-      "bg-blue-50 border-blue-200 text-blue-800 dark:bg-blue-950/20 dark:border-blue-900 dark:text-blue-300",
-      "bg-indigo-50 border-indigo-200 text-indigo-800 dark:bg-indigo-950/20 dark:border-indigo-900 dark:text-indigo-300",
-      "bg-violet-50 border-violet-200 text-violet-800 dark:bg-violet-950/20 dark:border-violet-900 dark:text-violet-300",
-      "bg-amber-50 border-amber-200 text-amber-800 dark:bg-amber-950/20 dark:border-amber-900 dark:text-amber-300",
+      "bg-blue-50    border-blue-200    text-blue-800    dark:bg-blue-950/20    dark:border-blue-900    dark:text-blue-300",
+      "bg-indigo-50  border-indigo-200  text-indigo-800  dark:bg-indigo-950/20  dark:border-indigo-900  dark:text-indigo-300",
+      "bg-violet-50  border-violet-200  text-violet-800  dark:bg-violet-950/20  dark:border-violet-900  dark:text-violet-300",
+      "bg-amber-50   border-amber-200   text-amber-800   dark:bg-amber-950/20   dark:border-amber-900   dark:text-amber-300",
       "bg-emerald-50 border-emerald-200 text-emerald-800 dark:bg-emerald-950/20 dark:border-emerald-900 dark:text-emerald-300",
-      "bg-teal-50 border-teal-200 text-teal-800 dark:bg-teal-950/20 dark:border-teal-900 dark:text-teal-300",
-      "bg-rose-50 border-rose-200 text-rose-800 dark:bg-rose-950/20 dark:border-rose-900 dark:text-rose-300",
+      "bg-teal-50    border-teal-200    text-teal-800    dark:bg-teal-950/20    dark:border-teal-900    dark:text-teal-300",
+      "bg-rose-50    border-rose-200    text-rose-800    dark:bg-rose-950/20    dark:border-rose-900    dark:text-rose-300",
     ];
     return colors[h % colors.length];
   };
 
+  // Label shown in the selector dropdown
+  const timetableLabel = (tt: any) =>
+    tt.name ||
+    [
+      tt.branch?.name ?? tt.branch?.code ?? "—",
+      `Sem ${tt.semester}`,
+      `Sec ${tt.section}`,
+    ].join(" · ");
+
   return (
     <DashboardLayout>
       <div className="space-y-8">
-        {/* Header */}
+        {/* ── Header ── */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
@@ -107,10 +121,10 @@ export default function TimetablesPage() {
             </p>
           </div>
 
-          {/* Timetable Selector */}
+          {/* Timetable selector */}
           {!loadingList && timetables.length > 0 && (
             <div className="flex items-center gap-3">
-              <label className="text-sm font-semibold text-slate-500">
+              <label className="text-sm font-semibold text-slate-500 shrink-0">
                 Timetable:
               </label>
               <select
@@ -120,7 +134,7 @@ export default function TimetablesPage() {
               >
                 {timetables.map((tt) => (
                   <option key={tt.id} value={tt.id}>
-                    {tt.name}
+                    {timetableLabel(tt)}
                   </option>
                 ))}
               </select>
@@ -128,25 +142,45 @@ export default function TimetablesPage() {
           )}
         </div>
 
-        {/* Timetable Grid Card */}
+        {/* ── Timetable Grid Card ── */}
         <div className="premium-card p-6 bg-white dark:bg-[#1e293b] overflow-x-auto">
-          {loadingData ? (
+          {loadingList ? (
             <div className="flex h-96 items-center justify-center">
-              <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-500 border-t-transparent"></div>
+              <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-500 border-t-transparent" />
+            </div>
+          ) : timetables.length === 0 ? (
+            <div className="flex h-96 items-center justify-center text-slate-400">
+              No timetables available. Upload a PDF timetable first!
+            </div>
+          ) : loadingData ? (
+            <div className="flex h-96 items-center justify-center">
+              <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-500 border-t-transparent" />
             </div>
           ) : timetableData ? (
-            <div className="min-w-[1000px] space-y-4">
-              {/* Header Details */}
-              <div className="flex items-center gap-6 pb-6 border-b border-slate-100 dark:border-slate-800">
+            <div className="min-w-[900px] space-y-4">
+              {/* Meta row */}
+              <div className="flex flex-wrap items-center gap-6 pb-6 border-b border-slate-100 dark:border-slate-800">
                 <div>
                   <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider">
                     Branch
                   </p>
                   <p className="text-base font-bold text-slate-800 dark:text-white mt-1">
-                    {timetableData.branch?.name} ({timetableData.branch?.code})
+                    {timetableData.branch?.name}
+                    {timetableData.branch?.code
+                      ? ` (${timetableData.branch.code})`
+                      : ""}
                   </p>
                 </div>
-                <div className="h-8 w-[1px] bg-slate-200 dark:bg-slate-800" />
+                <div className="h-8 w-px bg-slate-200 dark:bg-slate-800" />
+                <div>
+                  <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider">
+                    Department
+                  </p>
+                  <p className="text-base font-bold text-slate-800 dark:text-white mt-1">
+                    {timetableData.branch?.department?.name ?? "—"}
+                  </p>
+                </div>
+                <div className="h-8 w-px bg-slate-200 dark:bg-slate-800" />
                 <div>
                   <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider">
                     Semester
@@ -155,7 +189,7 @@ export default function TimetablesPage() {
                     Semester {timetableData.semester}
                   </p>
                 </div>
-                <div className="h-8 w-[1px] bg-slate-200 dark:bg-slate-800" />
+                <div className="h-8 w-px bg-slate-200 dark:bg-slate-800" />
                 <div>
                   <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider">
                     Section
@@ -164,61 +198,77 @@ export default function TimetablesPage() {
                     Section {timetableData.section}
                   </p>
                 </div>
+                {Array.isArray(timetableData.slots) && (
+                  <>
+                    <div className="h-8 w-px bg-slate-200 dark:bg-slate-800" />
+                    <div>
+                      <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider">
+                        Slots
+                      </p>
+                      <p className="text-base font-bold text-slate-800 dark:text-white mt-1">
+                        {timetableData.slots.length}
+                      </p>
+                    </div>
+                  </>
+                )}
               </div>
 
-              {/* Weekly Timetable Grid */}
-              <div className="grid grid-cols-10 border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden">
-                {/* Column Headers */}
-                <div className="bg-slate-50 dark:bg-slate-800/40 p-3 text-center text-xs font-bold text-slate-500 border-r border-b border-slate-200 dark:border-slate-800 flex items-center justify-center">
-                  Days
+              {/* Weekly Grid — 10 columns: 1 day label + 9 periods */}
+              <div className="grid grid-cols-10 border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden text-[11px]">
+                {/* Header row */}
+                <div className="bg-slate-50 dark:bg-slate-800/40 p-3 text-center font-bold text-slate-500 border-r border-b border-slate-200 dark:border-slate-800 flex items-center justify-center">
+                  Day
                 </div>
                 {PERIOD_HEADERS.map((p) => (
                   <div
                     key={p.id}
-                    className="bg-slate-50 dark:bg-slate-800/40 p-3 text-center border-b border-r last:border-r-0 border-slate-200 dark:border-slate-800"
+                    className="bg-slate-50 dark:bg-slate-800/40 p-2 text-center border-b border-r border-slate-200 dark:border-slate-800 last:border-r-0"
                   >
-                    <p className="text-xs font-bold text-slate-900 dark:text-white">
-                      Period {p.name}
+                    <p className="font-bold text-slate-900 dark:text-white">
+                      P{p.name}
                     </p>
-                    <p className="text-[10px] text-slate-400 mt-0.5">
+                    <p className="text-[9px] text-slate-400 mt-0.5 whitespace-nowrap">
                       {p.time}
                     </p>
                   </div>
                 ))}
 
-                {/* Grid Rows */}
-                {days.map((day) => (
+                {/* Data rows */}
+                {days.map((day, dayIdx) => (
                   <React.Fragment key={day}>
-                    {/* Day Cell */}
-                    <div className="bg-slate-50 dark:bg-slate-800/20 p-3 text-center border-r border-b last:border-b-0 border-slate-200 dark:border-slate-800 text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center justify-center">
+                    {/* Day label */}
+                    <div
+                      className={`bg-slate-50 dark:bg-slate-800/20 p-2 text-center border-r border-slate-200 dark:border-slate-800 font-bold uppercase tracking-wider text-slate-500 flex items-center justify-center ${dayIdx < days.length - 1 ? "border-b" : ""}`}
+                    >
                       {day.substring(0, 3)}
                     </div>
 
-                    {/* Periods Cells */}
-                    {periods.map((p) => {
-                      const slots = grid[day][p] || [];
-                      const isLunch = p === 6; // VI period starts after lunch (13:30)
+                    {/* Period cells */}
+                    {periods.map((p, pIdx) => {
+                      const slots: any[] = grid[day]?.[p] ?? [];
+                      const isLastRow = dayIdx === days.length - 1;
+                      const isLastCol = pIdx === periods.length - 1;
 
                       return (
                         <div
                           key={p}
-                          className="p-1 border-r border-b last:border-r-0 last:border-b-0 border-slate-200 dark:border-slate-800 flex flex-col justify-center min-h-[90px] relative"
+                          className={[
+                            "p-1 border-slate-200 dark:border-slate-800 flex flex-col justify-center min-h-[88px]",
+                            !isLastRow ? "border-b" : "",
+                            !isLastCol ? "border-r" : "",
+                          ].join(" ")}
                         >
-                          {/* If Lunch Break marker (render between V and VI columns implicitly) */}
-                          {/* Actually, periods are 1-9. Monday period V is 12:00-12:50. Lunch is 12:50-13:30. VI is 13:30-14:20 */}
                           {slots.length > 0 ? (
                             <div className="space-y-1 h-full flex flex-col justify-center">
-                              {slots.map((slot: unknown, idx: number) => (
+                              {slots.map((slot: any, idx: number) => (
                                 <div
                                   key={idx}
-                                  className={`p-2 rounded border text-left h-full flex flex-col justify-between ${getCourseBg(
-                                    slot.course?.code,
-                                  )}`}
+                                  className={`p-1.5 rounded border text-left flex flex-col justify-between h-full ${getCourseBg(slot.course?.code)}`}
                                 >
                                   <div>
                                     <div className="flex items-center justify-between gap-1">
-                                      <p className="text-xs font-bold tracking-wide truncate">
-                                        {slot.course?.code || "COURSE"}
+                                      <p className="font-bold tracking-wide truncate">
+                                        {slot.course?.code ?? "—"}
                                       </p>
                                       {slot.room?.roomNumber && (
                                         <span className="text-[9px] font-semibold bg-white/60 dark:bg-black/30 px-1 py-0.5 rounded flex items-center gap-0.5 shrink-0">
@@ -227,17 +277,16 @@ export default function TimetablesPage() {
                                         </span>
                                       )}
                                     </div>
-                                    <p className="text-[9px] font-medium leading-tight mt-0.5 line-clamp-1">
-                                      {slot.course?.name || "No Name"}
+                                    <p className="text-[9px] font-medium leading-tight mt-0.5 line-clamp-2 opacity-80">
+                                      {slot.course?.name ?? ""}
                                     </p>
                                   </div>
-
                                   {slot.faculty?.name && (
                                     <div className="flex items-center gap-1 mt-1 border-t border-black/5 dark:border-white/5 pt-1">
-                                      <User className="h-2 w-2 opacity-65 shrink-0" />
-                                      <p className="text-[8px] font-semibold opacity-75 truncate">
+                                      <User className="h-2 w-2 opacity-60 shrink-0" />
+                                      <p className="text-[8px] font-semibold opacity-70 truncate">
                                         {slot.faculty.name.replace(
-                                          /(Prof\.|Dr\.)\s*/,
+                                          /^(Prof\.|Dr\.)\s*/,
                                           "",
                                         )}
                                       </p>
@@ -247,8 +296,8 @@ export default function TimetablesPage() {
                               ))}
                             </div>
                           ) : (
-                            <span className="text-[10px] text-slate-300 dark:text-slate-700 font-semibold italic text-center select-none">
-                              -
+                            <span className="text-slate-300 dark:text-slate-700 font-semibold italic text-center select-none block w-full">
+                              –
                             </span>
                           )}
                         </div>
@@ -257,10 +306,18 @@ export default function TimetablesPage() {
                   </React.Fragment>
                 ))}
               </div>
+
+              {/* Empty-slots notice */}
+              {Array.isArray(timetableData.slots) &&
+                timetableData.slots.length === 0 && (
+                  <p className="text-center text-slate-400 text-sm pt-4">
+                    This timetable has no slots assigned yet.
+                  </p>
+                )}
             </div>
           ) : (
             <div className="flex h-96 items-center justify-center text-slate-400">
-              No timetables available. Upload a PDF timetable first!
+              Select a timetable above to view its schedule.
             </div>
           )}
         </div>

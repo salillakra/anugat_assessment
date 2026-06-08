@@ -2,7 +2,6 @@ import { Queue, QueueEvents, FlowProducer } from "bullmq";
 import { redisConnection } from "../config/redis";
 import { QUEUE_NAMES } from "../types/timetable-processing.types";
 
-
 export const timetableQueue = new Queue(QUEUE_NAMES.TIMETABLE_PROCESSING, {
   connection: redisConnection,
   defaultJobOptions: {
@@ -15,7 +14,6 @@ export const timetableQueue = new Queue(QUEUE_NAMES.TIMETABLE_PROCESSING, {
     },
   },
 });
-
 
 export const ocrQueue = new Queue(QUEUE_NAMES.TIMETABLE_OCR, {
   connection: redisConnection,

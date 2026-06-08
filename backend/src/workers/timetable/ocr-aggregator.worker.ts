@@ -18,7 +18,7 @@ export async function handleOcrAggregation(
   avgConfidence: number;
   pagesProcessed: number;
 }> {
-  const { importJobId, totalPages, tempDir } = job.data;
+  const { importJobId, totalPages, tempDir, pdfPath } = job.data;
 
   logger.info(
     `[OcrAggregator] Aggregating OCR results for ${totalPages} pages (job: ${job.id})`,
@@ -77,6 +77,7 @@ export async function handleOcrAggregation(
     {
       importJobId,
       ocrResults,
+      pdfPath,
       retryCount: 0,
     } satisfies GeminiParsingJobData,
     {
