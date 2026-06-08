@@ -104,7 +104,7 @@ export async function handlePdfConversion(
     queueName: QUEUE_NAMES.TIMETABLE_OCR,
     data: {
       importJobId,
-      imagePath: result.processedPath, // Pass the enhanced image to the OCR worker
+      imagePath: result.processedPath, 
       pageNumber: result.pageNumber,
       totalPages,
     } satisfies OcrPageJobData,
@@ -121,7 +121,7 @@ export async function handlePdfConversion(
       importJobId,
       totalPages,
       tempDir,
-      pdfPath: filePath, // passed through so Gemini can use the original PDF
+      pdfPath: filePath, 
     } satisfies OcrAggregatorJobData,
     opts: {
       attempts: 1,
