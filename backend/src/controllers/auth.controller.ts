@@ -18,16 +18,22 @@ export const AuthController = {
       return badRequest(c, parsed.error.issues[0]?.message ?? "Invalid input");
     }
 
-    const result = await AuthService.login(parsed.data.email, parsed.data.password);
+    const result = await AuthService.login(
+      parsed.data.email,
+      parsed.data.password,
+    );
     if (!result.success) {
       return unauthorized(c, result.error);
     }
 
-    // Set secure session cookie
+    const isSecure =
+      env.NODE_ENV === "production" ||
+      c.req.header("X-Forwarded-Proto") === "https";
+
     setCookie(c, "samayak_session", result.token, {
       httpOnly: true,
-      secure: env.NODE_ENV === "production",
-      sameSite: "Lax",
+      secure: isSecure,
+      sameSite: "None",
       maxAge: 7 * 24 * 60 * 60, // 7 days
       path: "/",
     });
