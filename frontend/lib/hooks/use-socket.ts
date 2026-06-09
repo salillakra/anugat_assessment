@@ -5,9 +5,15 @@ let socketInstance: Socket | null = null;
 
 const getSocket = (): Socket => {
   if (!socketInstance) {
-    socketInstance = io("http://localhost:3001", {
+    // Get Socket.IO URL from environment variable or use localhost as fallback
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+    // Remove /api suffix if present since Socket.IO connects to root
+    const socketUrl = apiUrl.replace(/\/api$/, "");
+
+    socketInstance = io(socketUrl, {
       autoConnect: true,
       withCredentials: true,
+      transports: ["websocket", "polling"], // Explicitly specify transports
     });
   }
   return socketInstance;
@@ -46,8 +52,12 @@ export function useImportProgress(jobId: string | null) {
           ...prev,
           importJobId: data.importJobId,
           status: data.status || data.stage || prev?.status || "QUEUED",
-          progress: data.progress !== undefined ? data.progress : prev?.progress,
-          error: data.error || (data.stage === "FAILED" ? data.message : undefined) || prev?.error,
+          progress:
+            data.progress !== undefined ? data.progress : prev?.progress,
+          error:
+            data.error ||
+            (data.stage === "FAILED" ? data.message : undefined) ||
+            prev?.error,
           summary: data.summary || prev?.summary,
         }));
       }

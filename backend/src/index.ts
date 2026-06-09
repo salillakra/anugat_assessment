@@ -21,42 +21,45 @@ import { branchesRouter } from "./routes/branches.route";
 import { timetablesRouter } from "./routes/timetables.route";
 import { importsRouter } from "./routes/imports.route";
 
-
 const app = new Hono();
 
 // socket.io setup
 const engine = new BunEngine({
   cors: {
-    origin: [env.FRONTEND_URL, "http://localhost:3000"],
+    origin: env.FRONTEND_URL.split(",").map((url) => url.trim()),
     credentials: true,
   },
 });
 const io = new SocketIOServer({
   cors: {
-    origin: [env.FRONTEND_URL, "http://localhost:3000"],
+    origin: env.FRONTEND_URL.split(",").map((url) => url.trim()),
     credentials: true,
   },
 });
 io.bind(engine);
 SocketManager.init(io);
 
-// background workers 
+// background workers
 logger.info("Starting BullMQ timetable processing workers...");
 startTimetableProcessingWorkers();
-
 
 // global middleware
 app.use("*", correlationIdMiddleware);
 app.use(
   "*",
   cors({
-    origin: [env.FRONTEND_URL, "http://localhost:3000"],
+    origin: env.FRONTEND_URL.split(",").map((url) => url.trim()),
     allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowHeaders: ["Content-Type", "Authorization", "X-Correlation-ID"],
+    allowHeaders: [
+      "Content-Type",
+      "Authorization",
+      "X-Correlation-ID",
+      "X-Requested-With",
+    ],
     credentials: true,
+    maxAge: 86400,
   }),
 );
-
 
 // routes
 app.get("/", (c) =>
@@ -79,10 +82,8 @@ app.route("/api/branches", branchesRouter);
 app.route("/api/timetables", timetablesRouter);
 app.route("/api/imports", importsRouter);
 
-
 // global error handler
 app.onError(errorHandler);
-
 
 // spinning the server
 logger.info(`Samayak API starting on port ${env.PORT}...`);
